@@ -22,8 +22,52 @@ class mysql_conn:
 	def updateTitle(self,book_id,title):
 		cursor = self.conn.cursor()
 		query = 'UPDATE BOOKS SET TITLE=%s WHERE ID=%s'
-		print(book_id)
-		print(title)
 		cursor.execute(query, (title, book_id))
-		self.conn.commit()
 		cursor.close()
+
+	def updateAuthor(self,book_id,author_id):
+		cursor = self.conn.cursor()
+		query = 'UPDATE BOOKS SET AUTHOR_ID=%s WHERE ID=%s'
+		
+		cursor.execute(query, (author_id, book_id))
+		cursor.close()
+	
+	def updateDone(self,book_id,done):
+		cursor = self.conn.cursor()
+		query = 'UPDATE BOOKS SET DONE=%s WHERE ID=%s'
+		newDone = ''
+		if done:
+			newDone = '1'
+		else:
+			newDone = '0'
+
+		cursor.execute(query, (newDone,book_id))
+		cursor.close()
+	
+	def updateType(self,book_id,typ):
+		cursor = self.conn.cursor()
+		query = 'UPDATE BOOKS SET TYPE=%s WHERE ID=%s'
+		cursor.execute(query, (typ,book_id))
+		cursor.close()
+		
+
+	def getAuthorId(self,name):
+		cursor = self.conn.cursor()
+		query = 'SELECT ID FROM AUTHORS WHERE FULL_NAME=%s'
+		cursor.execute(query,(name,))
+		row = cursor.fetchone()
+		cursor.close()
+		if row is not None:
+			return row[0]
+		else:
+			return None
+
+	def insertAuthor(self,name):
+		cursor = self.conn.cursor()
+		query = 'INSERT INTO AUTHORS (FULL_NAME) VALUES (%s)'
+
+		cursor.execute(query,(name,))
+		cursor.close()
+
+	def saveChanges(self):
+		self.conn.commit()

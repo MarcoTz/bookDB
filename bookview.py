@@ -35,6 +35,7 @@ class BookView(Gtk.Window):
 		self.filterBox = Gtk.Entry()
 		self.filterButton = Gtk.Button('Filter')
 		self.clearButton = Gtk.Button('Clear')
+		self.saveButton = Gtk.Button('Save Changes')
 		self.titleRadio = Gtk.RadioButton.new_with_label_from_widget(None,'Title')
 		self.authorRadio = Gtk.RadioButton.new_with_label_from_widget(self.titleRadio,'Author')
 		self.typeCombo = Gtk.ComboBox.new_with_model(types)
@@ -86,7 +87,9 @@ class BookView(Gtk.Window):
 		#connect events
 		self.filterButton.connect('clicked',self.filterButtonClicked)
 		self.clearButton.connect('clicked',self.clearButtonClicked)
+		self.saveButton.connect('clicked',self.saveButtonClicked)
 		titleRender.connect('edited',self.titleEdited)
+		authorRender.connect('edited',self.authorEdited)
 		doneRender.connect('toggled',self.doneEdited)
 		typeRender.connect('edited',self.typeEdited)
 
@@ -102,6 +105,7 @@ class BookView(Gtk.Window):
 		self.HLayout.pack_start(self.doneCombo,False,True,0)
 		self.HLayout.pack_start(self.filterButton,False,True,0)
 		self.HLayout.pack_start(self.clearButton,False,True,0)
+		self.HLayout.pack_start(self.saveButton,False,True,0)
 		self.VLayout.pack_start(self.scrollBars,True,True,0)
 		self.VLayout.pack_start(self.HLayout,False,True,0)
 
@@ -144,6 +148,9 @@ class BookView(Gtk.Window):
 	def clearButtonClicked(self,widget):
 		self.filtered=False
 		self.bookFilter.refilter()
+	
+	def saveButtonClicked(self,widget):
+		self.mysql.saveChanges()
 
 	def titleEdited(self,widget, path,text):
 		book = self.bookList[path]
@@ -151,13 +158,23 @@ class BookView(Gtk.Window):
 		book[1]=text
 
 	def authorEdited(self,widget,path,text):
-		pass	
-		#self.bookList[path][1]=text
+		book = self.bookList[path]
+		authorId = self.mysql.getAuthorId(text)
+
+		if authorId is None:
+			self.mysql.insertAuthor(text)
+			authorId = self.mysql.getAuthorId(text)
+		self.mysql.updateAuthor(book[0],authorId)
+		book[2]=text
 			
-	def doneEdited(self,widget,path,text):
-		pass
+	def doneEdited(self,widget,path):
+		book = self.bookList[path]
+		self.mysql.updateDone(book[0],not book[3])
+		book[3] = not book[3]
 	
 	def typeEdited(self,widget,path,text):
-		pass
-
-
+		if text not in ('fiction','non-fiction'):
+			return 
+		book = self.bookList[path]
+		self.mysql.updateType(book[0],text)
+		book[4] = text
