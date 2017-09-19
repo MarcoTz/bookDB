@@ -1,6 +1,7 @@
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+import re
 import dbconn
 
 class BookView(Gtk.Window):
@@ -75,9 +76,9 @@ class BookView(Gtk.Window):
 		remain = False
 
 		if self.titleRadio.get_active():
-			remain = model[iter][1] == self.filterBox.get_text()
+			remain = re.search(self.filterBox.get_text(),model[iter][1]) is not None
 		elif self.authorRadio.get_active():
-			remain = model[iter][2] == self.filterBox.get_text()
+			remain = re.search(self.filterBox.get_text(),model[iter][1]) is not None
 
 		if self.filterBox.get_text()=='':
 			remain = True
