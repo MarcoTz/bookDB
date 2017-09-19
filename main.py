@@ -29,11 +29,31 @@ class BookView(Gtk.Window):
 		self.filtered=False;
 		self.titleRadio = Gtk.RadioButton.new_with_label_from_widget(None,'Title')
 		self.authorRadio = Gtk.RadioButton.new_with_label_from_widget(self.titleRadio,'Author')
+		types = Gtk.ListStore(str)
+		types.append(['-'])
+		types.append(['fiction'])
+		types.append(['non-fiction'])
+		self.typeCombo = Gtk.ComboBox.new_with_model(types)
+		renderer = Gtk.CellRendererText()
+		self.typeCombo.pack_start(renderer,True)
+		self.typeCombo.add_attribute(renderer,'text',0)
+		self.typeCombo.set_active(0)
+		done = Gtk.ListStore(str)
+		done.append(['-'])
+		done.append(['True'])
+		done.append(['False'])
+		self.doneCombo = Gtk.ComboBox.new_with_model(done)
+		renderer = Gtk.CellRendererText()
+		self.doneCombo.pack_start(renderer,True)
+		self.doneCombo.add_attribute(renderer,'text',0)
+		self.doneCombo.set_active(0)
 
 		self.HLayout = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 		self.HLayout.pack_start(self.filterBox,True,True,0)
 		self.HLayout.pack_start(self.titleRadio,False,True,0)
 		self.HLayout.pack_start(self.authorRadio,False,True,0)
+		self.HLayout.pack_start(self.typeCombo,False,True,0)
+		self.HLayout.pack_start(self.doneCombo,False,True,0)
 		self.HLayout.pack_start(self.filterButton,False,True,0)
 		self.HLayout.pack_start(self.clearButton,False,True,0)
 
@@ -50,12 +70,31 @@ class BookView(Gtk.Window):
 		self.add(self.VLayout)
 
 	def filter_func(self,model,iter,data):
-		remain = not self.filtered
+		if not self.filtered:
+			return True
+		remain = False
 
 		if self.titleRadio.get_active():
-			remain = remain or (model[iter][1] == self.filterBox.get_text())
+			remain = model[iter][1] == self.filterBox.get_text()
 		elif self.authorRadio.get_active():
-			remain =  remain or (model[iter][2] == self.filterBox.get_text())
+			remain = model[iter][2] == self.filterBox.get_text()
+
+		if self.filterBox.get_text()=='':
+			remain = True
+
+		treeIter = self.typeCombo.get_active_iter()
+		if treeIter is not None:
+			mode = self.typeCombo.get_model()
+			if mode[treeIter][0] != '-':
+				remain = remain and (model[iter][4]==mode[treeIter][0])
+
+		treeIter = self.doneCombo.get_active_iter()
+		if treeIter is not None:
+			mode = self.doneCombo.get_model()
+			if mode[treeIter][0] == 'True':	
+				remain = remain and model[iter][3]
+			elif mode[treeIter][0] == 'False':
+				remain = remain and (not model[iter][3])
 
 		return remain
 
