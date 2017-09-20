@@ -35,13 +35,12 @@ class mysql_conn:
 	def updateDone(self,book_id,done):
 		cursor = self.conn.cursor()
 		query = 'UPDATE BOOKS SET DONE=%s WHERE ID=%s'
-		newDone = ''
 		if done:
-			newDone = '1'
+			done = '1'
 		else:
-			newDone = '0'
+			done = '0'
 
-		cursor.execute(query, (newDone,book_id))
+		cursor.execute(query, (done,book_id))
 		cursor.close()
 	
 	def updateType(self,book_id,typ):
@@ -67,7 +66,23 @@ class mysql_conn:
 		query = 'INSERT INTO AUTHORS (FULL_NAME) VALUES (%s)'
 
 		cursor.execute(query,(name,))
+		res = cursor.lastrowid
 		cursor.close()
+		return res
+	
+	def insertBook(self,title,authorId,done,typ):
+		cursor = self.conn.cursor()
+		query = 'INSERT INTO BOOKS (TITLE,AUTHOR_ID,DONE,TYPE) VALUES (%s,%s,%s,%s)'
+
+		if done:
+			done = '1'
+		else:
+			done = '0'
+
+		cursor.execute(query,(title,authorId,done,typ))
+		res = cursor.lastrowid	
+		cursor.close()
+		return res
 
 	def saveChanges(self):
 		self.conn.commit()

@@ -41,6 +41,7 @@ class BookView(Gtk.Window):
 		self.clearButton = Gtk.Button('Clear')
 		self.saveButton = Gtk.Button('Save Changes')
 		self.newButton = Gtk.Button('New Book')
+		self.deleteButton = Gtk.Button('Delete Book')
 		self.titleRadio = Gtk.RadioButton.new_with_label_from_widget(None,'Title')
 		self.authorRadio = Gtk.RadioButton.new_with_label_from_widget(self.titleRadio,'Author')
 		self.typeCombo = Gtk.ComboBox.new_with_model(types)
@@ -94,6 +95,7 @@ class BookView(Gtk.Window):
 		self.clearButton.connect('clicked',self.clearButtonClicked)
 		self.saveButton.connect('clicked',self.saveButtonClicked)
 		self.newButton.connect('clicked',self.newButtonClicked)
+		self.deleteButton.connect('clicked',self.deleteButtonClicked)
 		titleRender.connect('edited',self.titleEdited)
 		authorRender.connect('edited',self.authorEdited)
 		doneRender.connect('toggled',self.doneEdited)
@@ -113,6 +115,7 @@ class BookView(Gtk.Window):
 		self.HLayout.pack_start(self.clearButton,False,True,0)
 		self.HLayout2.pack_start(self.saveButton,True,True,0)
 		self.HLayout2.pack_start(self.newButton,True,True,0)
+		self.HLayout2.pack_start(self.deleteButton,True,True,0)
 		self.VLayout.pack_start(self.scrollBars,True,True,0)
 		self.VLayout.pack_start(self.HLayout,False,True,0)
 		self.VLayout.pack_start(self.HLayout2,False,True,0)
@@ -160,14 +163,60 @@ class BookView(Gtk.Window):
 	def saveButtonClicked(self,widget):
 		if self.get_title() == title+'*':
 			self.mysql.saveChanges()
-			dialog = dialogs.saveInfo(self)
+			dialog = dialogs.infoDialog(self,'Books Saved', 'Saved Changes')
 			dialog.run()
 			dialog.destroy()
 			self.set_title(title)
 	
 	def newButtonClicked(self,widget):
-		pass
+		dialog = dialogs.newBookDialog(self)
+		done = False
+		bookTitle = ''
+		author = ''
+		done = ''
+		typ = ''
 
+		while not done:
+			response = dialog.run()
+			
+			if response == Gtk.ResponseType.CANCEL:
+				dialog.destroy()
+				return
+			
+			bookTitle = dialog.titleBox.get_text()
+			author = dialog.titleBox.get_text()
+			done = dialog.doneCombo.get_active()
+			typ = dialog.typeCombo.get_active()
+			
+			if bookTitle == '' or author == '':
+				info = dialogs.infoDialog(self,'Enter Values','Please Fill out all Fields')
+				info.run()
+				info.destroy()
+			else:
+				done = True
+		
+		authorId = self.mysql.getAuthorId(author)
+		if authorId is None:
+			authorId = self.mysql.insertAuthor(author)
+	
+		if done==0:
+			done = True
+		else:
+			done = False
+
+		if typ==0:
+			typ = 'fiction'
+		else:
+			typ = 'non-fiction'
+
+		bookId = self.mysql.insertBook(bookTitle,authorId,done,typ)	
+		self.bookList.append([bookId,bookTitle,author,done,typ])
+		self.set_title(title+'*')
+		dialog.destroy()
+
+	def deleteButtonClicked(self,widget):
+		pass	
+  
 	def titleEdited(self,widget, path,text):
 		self.set_title(title+'*')
 		book = self.bookList[path]
@@ -180,8 +229,8 @@ class BookView(Gtk.Window):
 		authorId = self.mysql.getAuthorId(text)
 
 		if authorId is None:
-			self.mysql.insertAuthor(text)
-			authorId = self.mysql.getAuthorId(text)
+			authorId = self.mysql.insertAuthor(text)
+
 		self.mysql.updateAuthor(book[0],authorId)
 		book[2]=text
 			
