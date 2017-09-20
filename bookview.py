@@ -3,11 +3,14 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 import re
 import dbconn
+import dialogs
+
+title = 'Books'
 
 class BookView(Gtk.Window):
 	def __init__(self):
 		self.mysql = dbconn.mysql_conn()
-		Gtk.Window.__init__(self,title='Books')
+		Gtk.Window.__init__(self,title=title)
 		self.filtered = False
 
 		#liststores	
@@ -155,17 +158,24 @@ class BookView(Gtk.Window):
 		self.bookFilter.refilter()
 	
 	def saveButtonClicked(self,widget):
-		self.mysql.saveChanges()
+		if self.get_title() == title+'*':
+			self.mysql.saveChanges()
+			dialog = dialogs.saveInfo(self)
+			dialog.run()
+			dialog.destroy()
+			self.set_title(title)
 	
 	def newButtonClicked(self,widget):
 		pass
 
 	def titleEdited(self,widget, path,text):
+		self.set_title(title+'*')
 		book = self.bookList[path]
 		self.mysql.updateTitle(book[0],text)
 		book[1]=text
 
 	def authorEdited(self,widget,path,text):
+		self.set_title(title+'*')
 		book = self.bookList[path]
 		authorId = self.mysql.getAuthorId(text)
 
@@ -176,6 +186,7 @@ class BookView(Gtk.Window):
 		book[2]=text
 			
 	def doneEdited(self,widget,path):
+		self.set_title(title+'*')	
 		book = self.bookList[path]
 		self.mysql.updateDone(book[0],not book[3])
 		book[3] = not book[3]
@@ -183,6 +194,7 @@ class BookView(Gtk.Window):
 	def typeEdited(self,widget,path,text):
 		if text not in ('fiction','non-fiction'):
 			return 
+		self.set_title(title+'*')
 		book = self.bookList[path]
 		self.mysql.updateType(book[0],text)
 		book[4] = text
