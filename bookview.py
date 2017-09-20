@@ -22,10 +22,12 @@ class BookView(Gtk.Window):
 		done.append(['-'])
 		done.append(['True'])
 		done.append(['False'])
-		self.bookList = Gtk.ListStore(int,str,str,bool,str)
+		self.bookList = Gtk.ListStore(int,str,str,bool,str,str)
 		books = self.mysql.getBooks()
 		for book in books:
-			self.bookList.append(list(book))
+			book = list(book)
+			book.append(self.mysql.getTags(book[0]))
+			self.bookList.append(book)
 		
 		#create filter
 		self.bookFilter = self.bookList.filter_new()
@@ -54,11 +56,13 @@ class BookView(Gtk.Window):
 		authorRender = Gtk.CellRendererText()
 		doneRender = Gtk.CellRendererToggle()
 		typeRender = Gtk.CellRendererText()
+		tagRender = Gtk.CellRendererText()
 
 		#renderer attributes
 		titleRender.set_property('editable',True)
 		authorRender.set_property('editable',True)
 		typeRender.set_property('editable',True)
+		tagRender.set_property('editable',True)
 		
 		#columns
 		idCol = Gtk.TreeViewColumn('ID',idRender, text=0)
@@ -66,6 +70,7 @@ class BookView(Gtk.Window):
 		authorCol = Gtk.TreeViewColumn('Author',authorRender,text=2)
 		doneCol = Gtk.TreeViewColumn('Done',doneRender,active=3)
 		typeCol = Gtk.TreeViewColumn('Type',typeRender,text=4)
+		tagCol = Gtk.TreeViewColumn('Tags',tagRender,text=5)
 	
 		#make columns sortable
 		idCol.set_sort_column_id(0)
@@ -79,6 +84,7 @@ class BookView(Gtk.Window):
 		self.bookView.append_column(authorCol)
 		self.bookView.append_column(doneCol)
 		self.bookView.append_column(typeCol)
+		self.bookView.append_column(tagCol)
 	
 		#create comboboxes
 		renderer = Gtk.CellRendererText()
@@ -100,6 +106,7 @@ class BookView(Gtk.Window):
 		authorRender.connect('edited',self.authorEdited)
 		doneRender.connect('toggled',self.doneEdited)
 		typeRender.connect('edited',self.typeEdited)
+		tagRender.connect('edited',self.tagsEdited)
 
 		#layout attributes
 		self.VLayout.homogenous =False
@@ -161,13 +168,10 @@ class BookView(Gtk.Window):
 		self.bookFilter.refilter()
 	
 	def saveButtonClicked(self,widget):
-		if self.get_title() == title+'*':
-			try:
-				self.mysql.saveChanges()
-				dialog = dialogs.infoDialog(self,'Books Saved', 'Saved Changes')
-				self.set_title(title)
-			except MySQLdb.Error:
-				dialog = dialogs.infoDialog(self, 'Error', 'Error Saving Changes, please try again')
+		if self.get_title() == title+'*':	
+			self.mysql.saveChanges()
+			dialog = dialogs.infoDialog(self,'Books Saved', 'Saved Changes')
+			self.set_title(title)
 			dialog.run()
 			dialog.destroy()
 	
@@ -198,27 +202,20 @@ class BookView(Gtk.Window):
 			else:
 				done = True
 		
-		try:
-			authorId = self.mysql.getAuthorId(author)
-			if authorId is None:
-				authorId = self.mysql.insertAuthor(author)
-			if done==0:
-				done = True
-			else:
-				done = False
+		authorId = self.mysql.getAuthorId(author)
+		if authorId is None:
+			authorId = self.mysql.insertAuthor(author)
+		if done==0:
+			done = True
+		else:
+			done = False
 
-			if typ==0:
-				typ = 'fiction'
-			else:
-				typ = 'non-fiction'
+		if typ==0:
+			typ = 'fiction'
+		else:
+			typ = 'non-fiction'
 
-			bookId = self.mysql.insertBook(bookTitle,authorId,done,typ)	
-
-		except MySQLdb.Error:
-			dialog = dialogs.infoDialog(self,'Error','Error inserting book, please try again')
-			dialog.run()
-			dialog.destroy()
-			return
+		bookId = self.mysql.insertBook(bookTitle,authorId,done,typ)	
 	
 		self.bookList.append([bookId,bookTitle,author,done,typ])
 		self.set_title(title+'*')
@@ -231,68 +228,66 @@ class BookView(Gtk.Window):
 		path_id = selection.get_selected()[1]
 		bookId = self.bookFilter.get_value(path_id,0)
 	
-		try:
-			self.mysql.deleteBook(bookId)
-		except MySQLdb.Error:
-			dialog = dialogs.infoDialogs(self,'Error', 'Error deleting book, please try again')
-			dialog.run()
-			dialog.destroy()
-			return 
+		self.mysql.deleteBook(bookId)
 		self.bookList.remove(iterate)
 		self.set_title(title+'*')
   
 	def titleEdited(self,widget, path,text):
 		self.set_title(title+'*')
 		book = self.bookList[path]
-		try:
-			self.mysql.updateTitle(book[0],text)
-		except MySQLdb.Error:
-			dialog = dialogs.infoDialogs(self,'Error', 'Error updating Title, please try again')
-			dialog.run()
-			dialog.destroy()
-			return
+		self.mysql.updateTitle(book[0],text)
 		book[1]=text
 
 	def authorEdited(self,widget,path,text):
 		self.set_title(title+'*')
 		book = self.bookList[path]
-		try:
-			authorId = self.mysql.getAuthorId(text)
-			if authorId is None:
-				authorId = self.mysql.insertAuthor(text)
+		authorId = self.mysql.getAuthorId(text)
+		if authorId is None:
+			authorId = self.mysql.insertAuthor(text)
 
-			self.mysql.updateAuthor(book[0],authorId)
-
-		except MySQLdb.Error:
-			dialog = dialogs.infoDialogs(self,'Error','Error updating author, please try again')
-			dialog.run()
-			dialog.destroy()
-			return
+		self.mysql.updateAuthor(book[0],authorId)
 
 		book[2]=text
 			
 	def doneEdited(self,widget,path):
 		self.set_title(title+'*')	
 		book = self.bookList[path]
-		try:
-			self.mysql.updateDone(book[0],not book[3])
-		except MySQLdb.Error:
-			dialog = dialogs.infoDialogs(self,'Error','Error changing read status, please try again')
-			dialog.run()
-			dialog.destroy()
-			return
+		self.mysql.updateDone(book[0],not book[3])
 		book[3] = not book[3]
 	
 	def typeEdited(self,widget,path,text):
 		if text not in ('fiction','non-fiction'):
 			return 
+	
 		self.set_title(title+'*')
-		book = self.bookList[path]
-		try:
-			self.mysql.updateType(book[0],text)
-		except MySQLdb.Error:
-			dialog = dialogs.infoDialogs(self,'Error','Error changing type, please try again')
-			dialog.run()
-			dialog.destroy()
-			return
+		book = self.bookList[path]	
+		self.mysql.updateType(book[0],text)
 		book[4] = text
+	
+	def tagsEdited(self, widget, path, text):
+		book = self.bookList[path]
+		newTags = text.split(',')
+		oldTags = book[5].split(',')
+
+		tagIds = []
+		keep = []
+		for tag in newTags:	
+			if tag != '':
+				if tag not in oldTags:
+					tagId = self.mysql.getTagId(tag)
+					if tagId is None:
+						tagId = self.mysql.insertTag(tag)
+					tagIds.append(tagId)
+				else:
+					keep.append(tag)
+
+		for tagId in tagIds:
+			self.mysql.tagBook(book[0],tagId)
+
+		for tag in oldTags:
+			if tag not in keep and tag!='':
+				tagId = self.mysql.getTagId(tag)
+				self.mysql.untagBook(book[0],tagId)
+
+		self.set_title(title+"*")
+		book[5] = text

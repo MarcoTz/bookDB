@@ -10,14 +10,26 @@ class mysql_conn:
 
 	def getBooks(self):
 		cursor = self.conn.cursor()
-		query = 'SELECT BOOKS.ID, BOOKS.TITLE, AUTHORS.FULL_NAME, DONE, TYPE FROM BOOKS,AUTHORS WHERE BOOKS.AUTHOR_ID = AUTHORS.ID'
+		query = 'SELECT BOOKS.ID, BOOKS.TITLE, AUTHORS.FULL_NAME, BOOKS.DONE, BOOKS.TYPE FROM BOOKS,AUTHORS WHERE BOOKS.AUTHOR_ID = AUTHORS.ID'
 		cursor.execute(query)
 		res = []
 		for (ID,title,author,done,typ) in cursor:
 			res.append((ID,title,author,done,typ))
 		cursor.close()
 		return res
-		
+
+	def getTags(self,bookId):
+		cursor = self.conn.cursor()
+		query = 'SELECT TAGS.TAG FROM TAGS JOIN BOOKS_TAGS ON BOOKS_TAGS.TAG_ID=TAGS.ID WHERE BOOKS_TAGS.BOOK_ID=%s'
+		cursor.execute(query,(bookId,))
+		res = ''
+
+		for tag in cursor:
+			res += tag[0]+','
+
+		res = res[:-1]
+
+		return res	
 			
 	def updateTitle(self,book_id,title):
 		cursor = self.conn.cursor()
@@ -60,12 +72,32 @@ class mysql_conn:
 			return row[0]
 		else:
 			return None
+	
+	def getTagId(self,tag):
+		cursor = self.conn.cursor()
+		query = 'SELECT ID FROM TAGS WHERE TAG=%s'
+		cursor.execute(query,(tag,))
+		row = cursor.fetchone()
+		cursor.close()
+		if row is not None:
+			return row[0]
+		else:
+			return None
 
 	def insertAuthor(self,name):
 		cursor = self.conn.cursor()
 		query = 'INSERT INTO AUTHORS (FULL_NAME) VALUES (%s)'
 
 		cursor.execute(query,(name,))
+		res = cursor.lastrowid
+		cursor.close()
+		return res
+
+	def insertTag(self,tag):
+		cursor = self.conn.cursor()
+		query = 'INSERT INTO TAGS (TAG) VALUES (%s)'
+
+		cursor.execute(query,(tag,))
 		res = cursor.lastrowid
 		cursor.close()
 		return res
@@ -83,6 +115,18 @@ class mysql_conn:
 		res = cursor.lastrowid	
 		cursor.close()
 		return res
+
+	def tagBook(self,bookId,tagId):
+		cursor = self.conn.cursor()
+		query = 'INSERT INTO BOOKS_TAGS (BOOK_ID,TAG_ID) VALUES (%s,%s)'
+		cursor.execute(query,(bookId,tagId))
+		cursor.close()
+	
+	def untagBook(self,bookId,tagId):
+		cursor = self.conn.cursor()
+		query = 'DELETE FROM BOOKS_TAGS WHERE BOOK_ID=%s AND TAG_ID=%s'
+		cursor.execute(query,(bookId,tagId))
+		cursor.close()
 	
 	def deleteBook(self,bookId):
 		cursor = self.conn.cursor()
