@@ -31,11 +31,13 @@ class BookView(Gtk.Window):
 		#widgets
 		self.VLayout = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 		self.HLayout = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+		self.HLayout2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
 		self.scrollBars = Gtk.ScrolledWindow()
 		self.filterBox = Gtk.Entry()
 		self.filterButton = Gtk.Button('Filter')
 		self.clearButton = Gtk.Button('Clear')
 		self.saveButton = Gtk.Button('Save Changes')
+		self.newButton = Gtk.Button('New Book')
 		self.titleRadio = Gtk.RadioButton.new_with_label_from_widget(None,'Title')
 		self.authorRadio = Gtk.RadioButton.new_with_label_from_widget(self.titleRadio,'Author')
 		self.typeCombo = Gtk.ComboBox.new_with_model(types)
@@ -88,6 +90,7 @@ class BookView(Gtk.Window):
 		self.filterButton.connect('clicked',self.filterButtonClicked)
 		self.clearButton.connect('clicked',self.clearButtonClicked)
 		self.saveButton.connect('clicked',self.saveButtonClicked)
+		self.newButton.connect('clicked',self.newButtonClicked)
 		titleRender.connect('edited',self.titleEdited)
 		authorRender.connect('edited',self.authorEdited)
 		doneRender.connect('toggled',self.doneEdited)
@@ -105,9 +108,11 @@ class BookView(Gtk.Window):
 		self.HLayout.pack_start(self.doneCombo,False,True,0)
 		self.HLayout.pack_start(self.filterButton,False,True,0)
 		self.HLayout.pack_start(self.clearButton,False,True,0)
-		self.HLayout.pack_start(self.saveButton,False,True,0)
+		self.HLayout2.pack_start(self.saveButton,True,True,0)
+		self.HLayout2.pack_start(self.newButton,True,True,0)
 		self.VLayout.pack_start(self.scrollBars,True,True,0)
 		self.VLayout.pack_start(self.HLayout,False,True,0)
+		self.VLayout.pack_start(self.HLayout2,False,True,0)
 
 		#add layouts to window
 		self.add(self.VLayout)
@@ -120,7 +125,7 @@ class BookView(Gtk.Window):
 		if self.titleRadio.get_active():
 			remain = re.search(self.filterBox.get_text(),model[iter][1]) is not None
 		elif self.authorRadio.get_active():
-			remain = re.search(self.filterBox.get_text(),model[iter][1]) is not None
+			remain = re.search(self.filterBox.get_text(),model[iter][2]) is not None
 
 		if self.filterBox.get_text()=='':
 			remain = True
@@ -151,6 +156,9 @@ class BookView(Gtk.Window):
 	
 	def saveButtonClicked(self,widget):
 		self.mysql.saveChanges()
+	
+	def newButtonClicked(self,widget):
+		pass
 
 	def titleEdited(self,widget, path,text):
 		book = self.bookList[path]
