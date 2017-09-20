@@ -215,7 +215,15 @@ class BookView(Gtk.Window):
 		dialog.destroy()
 
 	def deleteButtonClicked(self,widget):
-		pass	
+		selection = self.bookView.get_selection()
+		path_index = selection.get_selected_rows()[1][0]
+		iterate = self.bookList.get_iter(path_index)
+		path_id = selection.get_selected()[1]
+		bookId = self.bookFilter.get_value(path_id,0)
+		
+		self.mysql.deleteBook(bookId)
+		self.bookList.remove(iterate)
+		self.set_title(title+'*')
   
 	def titleEdited(self,widget, path,text):
 		self.set_title(title+'*')

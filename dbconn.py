@@ -83,6 +83,13 @@ class mysql_conn:
 		res = cursor.lastrowid	
 		cursor.close()
 		return res
+	
+	def deleteBook(self,bookId):
+		cursor = self.conn.cursor()
+		query = 'DELETE FROM BOOKS WHERE ID=%s'
+
+		cursor.execute(query,(bookId,))
+		cursor.close()
 
 	def saveChanges(self):
 		self.conn.commit()
