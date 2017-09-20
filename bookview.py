@@ -162,11 +162,14 @@ class BookView(Gtk.Window):
 	
 	def saveButtonClicked(self,widget):
 		if self.get_title() == title+'*':
-			self.mysql.saveChanges()
-			dialog = dialogs.infoDialog(self,'Books Saved', 'Saved Changes')
+			try:
+				self.mysql.saveChanges()
+				dialog = dialogs.infoDialog(self,'Books Saved', 'Saved Changes')
+				self.set_title(title)
+			except MySQLdb.Error:
+				dialog = dialogs.infoDialog(self, 'Error', 'Error Saving Changes, please try again')
 			dialog.run()
 			dialog.destroy()
-			self.set_title(title)
 	
 	def newButtonClicked(self,widget):
 		dialog = dialogs.newBookDialog(self)
@@ -195,21 +198,28 @@ class BookView(Gtk.Window):
 			else:
 				done = True
 		
-		authorId = self.mysql.getAuthorId(author)
-		if authorId is None:
-			authorId = self.mysql.insertAuthor(author)
+		try:
+			authorId = self.mysql.getAuthorId(author)
+			if authorId is None:
+				authorId = self.mysql.insertAuthor(author)
+			if done==0:
+				done = True
+			else:
+				done = False
+
+			if typ==0:
+				typ = 'fiction'
+			else:
+				typ = 'non-fiction'
+
+			bookId = self.mysql.insertBook(bookTitle,authorId,done,typ)	
+
+		except MySQLdb.Error:
+			dialog = dialogs.infoDialog(self,'Error','Error inserting book, please try again')
+			dialog.run()
+			dialog.destroy()
+			return
 	
-		if done==0:
-			done = True
-		else:
-			done = False
-
-		if typ==0:
-			typ = 'fiction'
-		else:
-			typ = 'non-fiction'
-
-		bookId = self.mysql.insertBook(bookTitle,authorId,done,typ)	
 		self.bookList.append([bookId,bookTitle,author,done,typ])
 		self.set_title(title+'*')
 		dialog.destroy()
@@ -220,32 +230,57 @@ class BookView(Gtk.Window):
 		iterate = self.bookList.get_iter(path_index)
 		path_id = selection.get_selected()[1]
 		bookId = self.bookFilter.get_value(path_id,0)
-		
-		self.mysql.deleteBook(bookId)
+	
+		try:
+			self.mysql.deleteBook(bookId)
+		except MySQLdb.Error:
+			dialog = dialogs.infoDialogs(self,'Error', 'Error deleting book, please try again')
+			dialog.run()
+			dialog.destroy()
+			return 
 		self.bookList.remove(iterate)
 		self.set_title(title+'*')
   
 	def titleEdited(self,widget, path,text):
 		self.set_title(title+'*')
 		book = self.bookList[path]
-		self.mysql.updateTitle(book[0],text)
+		try:
+			self.mysql.updateTitle(book[0],text)
+		except MySQLdb.Error:
+			dialog = dialogs.infoDialogs(self,'Error', 'Error updating Title, please try again')
+			dialog.run()
+			dialog.destroy()
+			return
 		book[1]=text
 
 	def authorEdited(self,widget,path,text):
 		self.set_title(title+'*')
 		book = self.bookList[path]
-		authorId = self.mysql.getAuthorId(text)
+		try:
+			authorId = self.mysql.getAuthorId(text)
+			if authorId is None:
+				authorId = self.mysql.insertAuthor(text)
 
-		if authorId is None:
-			authorId = self.mysql.insertAuthor(text)
+			self.mysql.updateAuthor(book[0],authorId)
 
-		self.mysql.updateAuthor(book[0],authorId)
+		except MySQLdb.Error:
+			dialog = dialogs.infoDialogs(self,'Error','Error updating author, please try again')
+			dialog.run()
+			dialog.destroy()
+			return
+
 		book[2]=text
 			
 	def doneEdited(self,widget,path):
 		self.set_title(title+'*')	
 		book = self.bookList[path]
-		self.mysql.updateDone(book[0],not book[3])
+		try:
+			self.mysql.updateDone(book[0],not book[3])
+		except MySQLdb.Error:
+			dialog = dialogs.infoDialogs(self,'Error','Error changing read status, please try again')
+			dialog.run()
+			dialog.destroy()
+			return
 		book[3] = not book[3]
 	
 	def typeEdited(self,widget,path,text):
@@ -253,5 +288,11 @@ class BookView(Gtk.Window):
 			return 
 		self.set_title(title+'*')
 		book = self.bookList[path]
-		self.mysql.updateType(book[0],text)
+		try:
+			self.mysql.updateType(book[0],text)
+		except MySQLdb.Error:
+			dialog = dialogs.infoDialogs(self,'Error','Error changing type, please try again')
+			dialog.run()
+			dialog.destroy()
+			return
 		book[4] = text
