@@ -46,6 +46,9 @@ class newBookDialog(Gtk.Dialog):
 		self.typeCombo.add_attribute(renderer,'text',0)
 		self.typeCombo.set_active(0)
 
+		tagLabel = Gtk.Label('Tags(Comma separated): ')
+		self.tagBox = Gtk.Entry()
+
 		box = self.get_content_area()
 		box.add(titleLabel)
 		box.add(self.titleBox)
@@ -55,5 +58,7 @@ class newBookDialog(Gtk.Dialog):
 		box.add(self.doneCombo)
 		box.add(typeLabel)
 		box.add(self.typeCombo)
+		box.add(tagLabel)
+		box.add(self.tagBox)
 
 		self.show_all()

@@ -186,6 +186,7 @@ class BookView(Gtk.Window):
 		author = ''
 		done = ''
 		typ = ''
+		tags = []
 
 		while not done:
 			response = dialog.run()
@@ -195,9 +196,10 @@ class BookView(Gtk.Window):
 				return
 			
 			bookTitle = dialog.titleBox.get_text()
-			author = dialog.titleBox.get_text()
+			author = dialog.authorBox.get_text()
 			done = dialog.doneCombo.get_active()
 			typ = dialog.typeCombo.get_active()
+			tags = dialog.tagBox.get_text().split(',')
 			
 			if bookTitle == '' or author == '':
 				info = dialogs.infoDialog(self,'Enter Values','Please Fill out all Fields')
@@ -220,8 +222,21 @@ class BookView(Gtk.Window):
 			typ = 'non-fiction'
 
 		bookId = self.mysql.insertBook(bookTitle,authorId,done,typ)	
-	
-		self.bookList.append([bookId,bookTitle,author,done,typ])
+		
+		tagIds = []
+		for tag in tags:
+			tagId = self.mysql.getTagId(tag)
+			if tagId is None:
+				tagId = self.mysql.insertTag(tag)
+			tagIds.append(tagId)
+		
+		for tagId in tagIds:
+			self.mysql.tagBook(bookId,tagId)
+		
+		if len(tags)==0:
+			self.bookList.append([bookId,bookTitle,author,done,typ,''])
+		else:
+			self.bookList.append([bookId,bookTitle,author,done,typ,','.join(tags)])	
 		self.set_title(title+'*')
 		dialog.destroy()
 
