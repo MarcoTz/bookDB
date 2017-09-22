@@ -71,6 +71,11 @@ class BookView(Gtk.Window):
 		doneCol = Gtk.TreeViewColumn('Done',doneRender,active=3)
 		typeCol = Gtk.TreeViewColumn('Type',self.typeRender,text=4)
 		tagCol = Gtk.TreeViewColumn('Tags',self.tagRender,text=5)
+
+		idCol.set_resizable(True)
+		titleCol.set_resizable(True)
+		authorCol.set_resizable(True)
+		tagCol.set_resizable(True)
 	
 		#add columns to table
 		self.bookView.append_column(idCol)
