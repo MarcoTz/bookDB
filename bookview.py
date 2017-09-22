@@ -46,6 +46,7 @@ class BookView(Gtk.Window):
 		self.deleteButton = Gtk.Button('Delete Book')
 		self.titleRadio = Gtk.RadioButton.new_with_label_from_widget(None,'Title')
 		self.authorRadio = Gtk.RadioButton.new_with_label_from_widget(self.titleRadio,'Author')
+		self.tagRadio = Gtk.RadioButton.new_with_label_from_widget(self.titleRadio,'Tag')
 		self.typeCombo = Gtk.ComboBox.new_with_model(types)
 		self.doneCombo = Gtk.ComboBox.new_with_model(done)
 		self.bookView = Gtk.TreeView.new_with_model(self.bookFilter)
@@ -115,6 +116,7 @@ class BookView(Gtk.Window):
 		self.HLayout.pack_start(self.filterBox,True,True,0)
 		self.HLayout.pack_start(self.titleRadio,False,True,0)
 		self.HLayout.pack_start(self.authorRadio,False,True,0)
+		self.HLayout.pack_start(self.tagRadio,False,True,0)
 		self.HLayout.pack_start(self.typeCombo,False,True,0)
 		self.HLayout.pack_start(self.doneCombo,False,True,0)
 		self.HLayout.pack_start(self.filterButton,False,True,0)
@@ -138,6 +140,8 @@ class BookView(Gtk.Window):
 			remain = re.search(self.filterBox.get_text(),model[iter][1]) is not None
 		elif self.authorRadio.get_active():
 			remain = re.search(self.filterBox.get_text(),model[iter][2]) is not None
+		elif self.tagRadio.get_active():
+			remain = re.search(self.filterBox.get_text(),model[iter][5]) is not None
 
 		if self.filterBox.get_text()=='':
 			remain = True
