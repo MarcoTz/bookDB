@@ -52,32 +52,26 @@ class BookView(Gtk.Window):
 
 		#renderers
 		idRender = Gtk.CellRendererText()
-		titleRender = Gtk.CellRendererText()
-		authorRender = Gtk.CellRendererText()
+		self.titleRender = Gtk.CellRendererText()
+		self.authorRender = Gtk.CellRendererText()
 		doneRender = Gtk.CellRendererToggle()
-		typeRender = Gtk.CellRendererText()
-		tagRender = Gtk.CellRendererText()
+		self.typeRender = Gtk.CellRendererText()
+		self.tagRender = Gtk.CellRendererText()
 
 		#renderer attributes
-		titleRender.set_property('editable',True)
-		authorRender.set_property('editable',True)
-		typeRender.set_property('editable',True)
-		tagRender.set_property('editable',True)
+		self.titleRender.set_property('editable',True)
+		self.authorRender.set_property('editable',True)
+		self.typeRender.set_property('editable',True)
+		self.tagRender.set_property('editable',True)
 		
 		#columns
 		idCol = Gtk.TreeViewColumn('ID',idRender, text=0)
-		titleCol = Gtk.TreeViewColumn('Title',titleRender,text=1)
-		authorCol = Gtk.TreeViewColumn('Author',authorRender,text=2)
+		titleCol = Gtk.TreeViewColumn('Title',self.titleRender,text=1)
+		authorCol = Gtk.TreeViewColumn('Author',self.authorRender,text=2)
 		doneCol = Gtk.TreeViewColumn('Done',doneRender,active=3)
-		typeCol = Gtk.TreeViewColumn('Type',typeRender,text=4)
-		tagCol = Gtk.TreeViewColumn('Tags',tagRender,text=5)
+		typeCol = Gtk.TreeViewColumn('Type',self.typeRender,text=4)
+		tagCol = Gtk.TreeViewColumn('Tags',self.tagRender,text=5)
 	
-		#make columns sortable
-		idCol.set_sort_column_id(0)
-		titleCol.set_sort_column_id(1)
-		authorCol.set_sort_column_id(2)
-		doneCol.set_sort_column_id(3)
-
 		#add columns to table
 		self.bookView.append_column(idCol)
 		self.bookView.append_column(titleCol)
@@ -102,11 +96,11 @@ class BookView(Gtk.Window):
 		self.saveButton.connect('clicked',self.saveButtonClicked)
 		self.newButton.connect('clicked',self.newButtonClicked)
 		self.deleteButton.connect('clicked',self.deleteButtonClicked)
-		titleRender.connect('edited',self.titleEdited)
-		authorRender.connect('edited',self.authorEdited)
+		self.titleRender.connect('edited',self.titleEdited)
+		self.authorRender.connect('edited',self.authorEdited)
 		doneRender.connect('toggled',self.doneEdited)
-		typeRender.connect('edited',self.typeEdited)
-		tagRender.connect('edited',self.tagsEdited)
+		self.typeRender.connect('edited',self.typeEdited)
+		self.tagRender.connect('edited',self.tagsEdited)
 
 		#layout attributes
 		self.VLayout.homogenous =False
@@ -161,10 +155,20 @@ class BookView(Gtk.Window):
 
 	def filterButtonClicked(self,widget):
 		self.filtered=True
+		self.titleRender.set_property('editable',False)
+		self.authorRender.set_property('editable',False)
+		self.typeRender.set_property('editable',False)
+		self.tagRender.set_property('editable',False)
+
 		self.bookFilter.refilter()
 	
 	def clearButtonClicked(self,widget):
 		self.filtered=False
+		self.titleRender.set_property('editable',True)
+		self.authorRender.set_property('editable',True)
+		self.typeRender.set_property('editable',True)
+		self.tagRender.set_property('editable',True)
+
 		self.bookFilter.refilter()
 	
 	def saveButtonClicked(self,widget):
